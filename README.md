@@ -3,6 +3,9 @@ Low Memory Array-Access JSON parser
 
 Generated with `php tests/lightJsonArray.performanceProblemExample.php`
 
+<br />
+<br />
+
 ## Using Test Data Example (3000001 elements):
 
 ### Tests:
@@ -15,6 +18,8 @@ Test data memory cost as LightJsonArray: 239.75 MB.
 LightJsonArray cost 44.23% of what decoded Array cost<br />
 LightJsonArray cost 44.23% of what decoded Object cost
 
+<br />
+<br />
 
 ## Using Long Hashes Data Example (100002 elements):
 
