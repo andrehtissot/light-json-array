@@ -47,44 +47,56 @@ class LightJsonArray implements ArrayAccess,SeekableIterator,Countable {
         $this->offsetSetJSON($index, '');
     }
     protected function setCountAndOffsetsByIndex(){
-        if(!isset($this->internalJson[2])) {
+        $internalJsonLength = strlen($this->internalJson);
+        for ($i=0; $i < $internalJsonLength; $i++){
+            if($this->internalJson[$i] === '['){
+                $offset = $i+1;
+                $offsetsByIndex = array($offset);
+                break;
+            }
+        }
+        if($i === $internalJsonLength){
             $this->count = 0;
-            $this->offsetsByIndex = array();
+            $this->offsetsByIndex = new SplFixedArray();
             return;
         }
-        $lastOffset = 1;
-        $this->count = 1;
-        $offsetsByIndex = array($lastOffset);
-        $openHashPos = @strpos($this->internalJson, ',{', $lastOffset);
-        $openArrayPos = @strpos($this->internalJson, ',[', $lastOffset);
-        while (true) {
-            $commaPos = @strpos($this->internalJson, ',', $lastOffset);
-            if($commaPos === false) { break; }
-            if($openHashPos && $openHashPos < $commaPos) {
-                $closeHashPos = @strpos($this->internalJson, '},', $lastOffset);
-                if($closeHashPos && $closeHashPos > $commaPos) {
-                    $lastOffset = $closeHashPos+1;
-                    $openHashPos = @strpos($this->internalJson, ',{', $lastOffset);
-                    continue;
-                }
+        for ($limit=$i=$internalJsonLength-1; $i>$offset; $i--)
+            if($this->internalJson[$i] === ']'){
+                $limit = $i;
+                break;
             }
-            if($openArrayPos && $openArrayPos < $commaPos) {
-                $closeArrayPos = @strpos($this->internalJson, '],', $lastOffset);
-                if($closeArrayPos && $closeArrayPos > $commaPos) {
-                    $lastOffset = $closeArrayPos+1;
-                    $openArrayPos = @strpos($this->internalJson, ',[', $lastOffset);
-                    continue;
-                }
-            }
-            $offsetsByIndex[] = $commaPos+1;
-            $this->count++;
-            $lastOffset = $commaPos+1;
+        if($i === $internalJsonLength || $limit === $offset){
+            $this->count = 0;
+            $this->offsetsByIndex = new SplFixedArray();
+            return;
         }
-        $offsetsByIndex[] = @strrpos($this->internalJson, ']', $lastOffset)+1;
+        $openedArrays = 0;
+        $openedHashes = 0;
+        for ($i=$offset; $i<$limit;) {
+            if ($this->internalJson[$i] === '"' && $this->internalJson[$i-1] !== '\\') {
+                do {
+                    $newPos = strpos($this->internalJson, '"', $i+1);
+                    if($newPos) { $i = $newPos; }
+                    else { break; }
+                } while ($this->internalJson[$i] === '"' && $this->internalJson[$i-1] === '\\');
+            } else {
+                switch ($this->internalJson[$i]) {
+                    case '[': $openedArrays++; break;
+                    case ']': $openedArrays--; break;
+                    case '{': $openedHashes++; break;
+                    case '}': $openedHashes--; break;
+                    case ',':
+                        if($openedArrays === 0 && $openedHashes === 0)
+                            $offsetsByIndex[] = $i+1;
+                }
+            }
+            $i++;
+        }
+        $this->count = count($offsetsByIndex);
+        $offsetsByIndex[] = $limit+1;
         $this->offsetsByIndex = SplFixedArray::fromArray($offsetsByIndex);
         $offsetsByIndex = null;
     }
-
     protected function offsetSetJSON($index, $valueAsJson){
         if($index === null) { //push
             $this->internalJson[strlen($this->internalJson)-1] = ',';
