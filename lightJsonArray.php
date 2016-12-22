@@ -57,44 +57,74 @@ class LightJsonArray implements ArrayAccess,SeekableIterator,Countable {
         }
         if($i === $internalJsonLength){
             $this->count = 0;
-            $this->offsetsByIndex = new SplFixedArray();
+            $this->offsetsByIndex = new \SplFixedArray();
             return;
         }
-        for ($limit=$i=$internalJsonLength-1; $i>$offset; $i--)
+        for ($limit=$i=$internalJsonLength-1; $i>$offset; $i--){
             if($this->internalJson[$i] === ']'){
                 $limit = $i;
                 break;
             }
+        }
         if($i === $internalJsonLength || $limit === $offset){
             $this->count = 0;
-            $this->offsetsByIndex = new SplFixedArray();
+            $this->offsetsByIndex = new \SplFixedArray();
             return;
         }
         $openedArrays = 0;
         $openedHashes = 0;
-        for ($i=$offset; $i<$limit;) {
-            if ($this->internalJson[$i] === '"' && $this->internalJson[$i-1] !== '\\') {
-                do {
-                    $newPos = strpos($this->internalJson, '"', $i+1);
-                    if($newPos) { $i = $newPos; }
-                    else { break; }
-                } while ($this->internalJson[$i] === '"' && $this->internalJson[$i-1] === '\\');
-            } else {
+        if(strpos($this->internalJson, '\\"', $offset)){
+            for ($i=$offset; $i<$limit; $i++) {
                 switch ($this->internalJson[$i]) {
-                    case '[': $openedArrays++; break;
-                    case ']': $openedArrays--; break;
-                    case '{': $openedHashes++; break;
-                    case '}': $openedHashes--; break;
                     case ',':
                         if($openedArrays === 0 && $openedHashes === 0)
                             $offsetsByIndex[] = $i+1;
+                        break;
+                    case '"':
+                        if($this->internalJson[$i-1] !== '\\')
+                            do {
+                                $newPos = strpos($this->internalJson, '"', $i+1);
+                                if($newPos) { $i = $newPos; } else { break; }
+                            } while ($this->internalJson[$i-1] === '\\');
+                        break;
+                    case '[': $openedArrays++; break;
+                    case ']': $openedArrays--; break;
+                    case '{': $openedHashes++; break;
+                    case '}': $openedHashes--;
                 }
             }
-            $i++;
+        } elseif(strpos($this->internalJson, '"', $offset)){
+            for ($i=$offset; $i<$limit; $i++) {
+                switch ($this->internalJson[$i]) {
+                    case ',':
+                        if($openedArrays === 0 && $openedHashes === 0)
+                            $offsetsByIndex[] = $i+1;
+                        break;
+                    case '"':
+                        $newPos = strpos($this->internalJson, '"', $i+1);
+                        if($newPos) { $i = $newPos; }
+                        break;
+                    case '[': $openedArrays++; break;
+                    case ']': $openedArrays--; break;
+                    case '{': $openedHashes++; break;
+                    case '}': $openedHashes--;
+                }
+            }
+        } else {
+            for ($i=$offset; $i<$limit; $i++) {
+                switch ($this->internalJson[$i]) {
+                    case ',':
+                        $offsetsByIndex[] = $i+1;
+                        break;
+                    case '[':
+                        $newPos = strpos($this->internalJson, ']', $i+1);
+                        if($newPos) { $i = $newPos; }
+                }
+            }
         }
         $this->count = count($offsetsByIndex);
         $offsetsByIndex[] = $limit+1;
-        $this->offsetsByIndex = SplFixedArray::fromArray($offsetsByIndex);
+        $this->offsetsByIndex = \SplFixedArray::fromArray($offsetsByIndex);
         $offsetsByIndex = null;
     }
     protected function offsetSetJSON($index, $valueAsJson){
