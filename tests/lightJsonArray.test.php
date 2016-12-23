@@ -41,7 +41,7 @@ class LightJsonArrayTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(true, $lightJsonArray[2000]);
         $this->assertEquals(null, $lightJsonArray[5000]);
         $this->assertEquals(false, $lightJsonArray[7000]);
-        $this->assertEquals('value1', $lightJsonArray[9000][0][0]);
+        $this->assertEquals('"[-1,{value1,"value2""}]"', $lightJsonArray[9000][0][0]);
         $this->assertEquals(false, $lightJsonArray[9000][0][1]);
         $this->assertEquals('how?', $lightJsonArray[9000][2]);
 
@@ -76,11 +76,11 @@ class LightJsonArrayTest extends PHPUnit_Framework_TestCase {
         foreach ($lightJsonArray as $index => $value) {
             switch ($index) {
                 case 0: $this->assertEquals(-1, $value); break;
-                case 200000: $this->assertEquals(true, $value); break;
-                case 500000: $this->assertEquals(null, $value); break;
-                case 700000: $this->assertEquals(false, $value); break;
-                case 1000000: $this->assertEquals('', $value); break;
-                case 2000000: $this->assertEquals('testValue', $value); break;
+                case 2000: $this->assertEquals(true, $value); break;
+                case 5000: $this->assertEquals(null, $value); break;
+                case 7000: $this->assertEquals(false, $value); break;
+                case 10000: $this->assertEquals('', $value); break;
+                case 20000: $this->assertEquals('testValue', $value); break;
                 case 15000:
                     $this->assertEquals('value1', $value[0]);
                     $this->assertEquals(false, $value[1]);
