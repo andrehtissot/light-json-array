@@ -16,7 +16,7 @@ if(!file_exists($jsonDataFileName)){
     $json .= 'false,';
     for ($i=0; $i < 1999; $i++)
         $json .= '"_'.rand(10000000,99999999).'",';
-    $json .= '[["value1",false],[12,true,8.5,{"a":"b","c":"d","e":[4,32.3,true]},null],"how?"],';
+    $json .= '[["\"[-1,{value1,\"value2\"\"}]\"",false],[12,true,8.5,{"a":"b","c":"d","e":[4,32.3,true]},null],"how?"],';
     // $json .= '[["value1",false],[12,true,8.5,null],"how?"],';
     // $json .= '["value1",false,12,true,8.5,"a","b","c","d","e",4,32.3,true,null,"how?"],';
     // $json .= '"test",';
